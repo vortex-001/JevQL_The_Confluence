@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Developer Settings & Engine Status — JevQL{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem; letter-spacing: -0.02em;">
+    Settings & Engine Status
+  </h1>
+  <p style="color: var(--text-secondary); font-size: 0.95rem;">
+    Local developer tool configuration, PostgreSQL database version, and semantic provider parameters.
+  </p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+  <!-- Active Database Configuration -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">Database Configuration</h3>
+      <span class="badge badge-positive">Connected</span>
+    </div>
+
+    <table class="data-table">
+      <tbody>
+        <tr>
+          <td style="font-weight: 600; width: 140px; color: var(--text-secondary);">Database Engine</td>
+          <td><code>django.db.backends.postgresql</code> (PostgreSQL 18.6)</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600; color: var(--text-secondary);">Target Database</td>
+          <td><strong>{{ db_conf.NAME }}</strong></td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600; color: var(--text-secondary);">Host & Port</td>
+          <td><code>{{ db_conf.HOST }}:{{ db_conf.PORT }}</code></td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600; color: var(--text-secondary);">Configured User</td>
+          <td><code>{{ db_conf.USER }}</code></td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600; color: var(--text-secondary);">Credentials Masking</td>
+          <td><span class="badge" style="background: var(--bg-subtle);">Zero Credential Leakage</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Semantic Provider Configuration -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">Semantic Search Provider</h3>
+      <span class="badge {% if has_gemini_key %}badge-positive{% else %}badge-neutral{% endif %}">
+        {% if has_gemini_key %}Gemini Active{% else %}Local Trigram Mode{% endif %}
+      </span>
+    </div>
+
+    <table class="data-table">
+      <tbody>
+        <tr>
+          <td style="font-weight: 600; width: 160px; color: var(--text-secondary);">Active Provider</td>
+          <td><strong>{{ provider_name }}</strong></td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600; color: var(--text-secondary);">Gemini API Key</td>
+          <td>
+            {% if has_gemini_key %}
+            <span style="color: #2E7D32; font-weight: 600;">Configured (GEMINI_API_KEY)</span>
+            {% else %}
+            <span style="color: var(--text-muted);">None (Fallback to PostgreSQL Trigram)</span>
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600; color: var(--text-secondary);">Timeout Threshold</td>
+          <td><code>{{ timeout_seconds }}s</code> per candidate batch</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600; color: var(--text-secondary);">Max Candidates</td>
+          <td><code>{{ candidate_limit }}</code> records evaluated per query</td>
+        </tr>
+        <tr>
+          <td style="font-weight: 600; color: var(--text-secondary);">Paid Extensions</td>
+          <td><span class="badge" style="background: #E8F5E9; color: #2E7D32;">None (100% Free Open-Source pg_trgm)</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Security & Architecture Information -->
+<div class="card">
+  <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem;">Safety & Architecture Guardrails</h3>
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; font-size: 0.88rem;">
+    <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+      <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">1. Read-Only Transactions</div>
+      <p style="color: var(--text-secondary); line-height: 1.5;">
+        All custom SQL and ORM queries are executed with explicit read-only transactions, preventing DROP, UPDATE, or DELETE operations.
+      </p>
+    </div>
+    <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+      <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">2. Identifier Quoting (quote_ident)</div>
+      <p style="color: var(--text-secondary); line-height: 1.5;">
+        Schema, table, and column names are validated against the PostgreSQL catalog and safely quoted with <code>psycopg2.sql.Identifier</code>.
+      </p>
+    </div>
+    <div style="background: var(--bg-subtle); padding: 1.25rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+      <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">3. Session Secret Encryption</div>
+      <p style="color: var(--text-secondary); line-height: 1.5;">
+        Connection credentials for custom databases are stored encrypted in signed HTTP sessions. No database passwords are saved to disk or code.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
