@@ -48,12 +48,10 @@ export default function Navbar() {
           fontSize: '0.92rem',
           fontWeight: 500,
         }} className="desktop-nav-links">
-          <a href="#product" style={{ transition: 'color 0.15s' }} className="nav-hover-link">Product</a>
           <a href="#features" style={{ transition: 'color 0.15s' }} className="nav-hover-link">Features</a>
           <a href="#how-it-works" style={{ transition: 'color 0.15s' }} className="nav-hover-link">How It Works</a>
           <a href="#examples" style={{ transition: 'color 0.15s' }} className="nav-hover-link">SQL Examples</a>
           <a href="#architecture" style={{ transition: 'color 0.15s' }} className="nav-hover-link">Architecture</a>
-          <a href="#docs" style={{ transition: 'color 0.15s' }} className="nav-hover-link">Documentation</a>
         </div>
 
         {/* Right CTA */}
