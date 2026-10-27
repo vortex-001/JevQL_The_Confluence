@@ -291,7 +291,7 @@ No accuracy, speed, or business-impact claims should be made until these metrics
 | Harsh Garg | Team Leader, Integration and Testing |
 | Tushar | Frontend Development |
 | Nitish | Backend Development |
-| Saloni | Database and Supporting Development |
+| Preeti Raj | Database and Supporting Development |
 
 ## Hackathon
 
