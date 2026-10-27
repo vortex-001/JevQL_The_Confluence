@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}PostgreSQL Connections — JevQL{% endblock %}
+
+{% block extra_head %}
+<style>
+  .conn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 900px) {
+    .conn-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  .form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+  }
+  .form-control {
+    width: 100%;
+    padding: 0.75rem 0.95rem;
+    border: 1.5px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    font-size: 0.92rem;
+    background: #FFF;
+    color: var(--text-primary);
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: var(--accent-burnt-orange);
+    box-shadow: 0 0 0 3px var(--accent-burnt-orange-subtle);
+  }
+  .table-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--bg-warm-ivory);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.5rem;
+  }
+  .table-name {
+    font-family: Consolas, monospace;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+  }
+  .col-pill {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    background: #FFF;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    font-size: 0.78rem;
+    margin-right: 0.4rem;
+    margin-bottom: 0.4rem;
+    font-family: Consolas, monospace;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 1.85rem; font-weight: 800; color: var(--text-primary); margin-bottom: 0.35rem;">PostgreSQL Connections & Schemas</h1>
+  <p style="color: var(--text-secondary); font-size: 1rem;">
+    Connect user-provided PostgreSQL databases, introspect accessible tables, and select a target table for natural language search.
+  </p>
+</div>
+
+<div class="conn-grid">
+  <!-- Active Connection Card -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 700;">Active Search Target</h3>
+      {% if has_custom_conn %}
+      <span class="badge badge-green">Custom PostgreSQL Active</span>
+      {% else %}
+      <span class="badge badge-orange">Default Demo (jevql_db)</span>
+      {% endif %}
+    </div>
+
+    <div style="background: var(--bg-warm-ivory); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1.25rem;">
+      <div style="display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem;">
+        <div><strong>Connection Name:</strong> {{ current_conn.name }}</div>
+        <div><strong>Database:</strong> <code style="background: #FFF; padding: 0.1rem 0.4rem; border-radius: 3px;">{{ current_conn.database }}</code></div>
+        <div><strong>Host / Port:</strong> {{ current_conn.host }}:{{ current_conn.port }}</div>
+        <div><strong>Username:</strong> {{ current_conn.username }}</div>
+        <div><strong>Active Target:</strong> 
+          {% if current_conn.active_table %}
+          <span style="color: var(--accent-burnt-orange); font-weight: 700;">{{ current_conn.active_schema }}.{{ current_conn.active_table }}</span>
+          {% else %}
+          <span>EmployeeFeedback (Default demo table)</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{% url 'home' %}" class="btn-primary" style="flex: 1; justify-content: center;">Go to Search Dashboard</a>
+      {% if has_custom_conn %}
+      <form method="POST" action="{% url 'connections:index' %}">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="disconnect">
+        <button type="submit" class="btn-secondary">Disconnect</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Connect New Database Form -->
+  <div class="card">
+    <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 1.25rem;">Connect Another PostgreSQL Database</h3>
+    
+    <form method="POST" action="{% url 'connections:index' %}">
+      {% csrf_token %}
+      <div class="form-group">
+        <label>Connection Name (Optional label)</label>
+        <input type="text" name="name" class="form-control" placeholder="e.g. Local JevQL Database">
+      </div>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 0.75rem;">
+        <div class="form-group">
+          <label>Host</label>
+          <input type="text" name="host" class="form-control" value="127.0.0.1" required>
+        </div>
+        <div class="form-group">
+          <label>Port</label>
+          <input type="number" name="port" class="form-control" value="5432" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Database Name</label>
+        <input type="text" name="database" class="form-control" placeholder="e.g. jevql or students_db" required>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+        <div class="form-group">
+          <label>Username</label>
+          <input type="text" name="username" class="form-control" value="postgres" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" name="password" class="form-control" placeholder="Database password">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; margin-top: 1rem;">
+        <button type="submit" name="action" value="test" class="btn-secondary" style="flex: 1; justify-content: center;">
+          Test Connection
+        </button>
+        <button type="submit" name="action" value="connect" class="btn-primary" style="flex: 1; justify-content: center;">
+          Connect & Inspect
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Discovered Schema & Tables (When custom connection is active) -->
+{% if has_custom_conn and discovered_structure.success %}
+<div class="card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+    <div>
+      <h3 style="font-size: 1.2rem; font-weight: 700;">Discovered Tables in '{{ current_conn.database }}'</h3>
+      <p style="color: var(--text-secondary); font-size: 0.88rem;">Select a table to query dynamically using JevQL natural language search.</p>
+    </div>
+    <span class="badge badge-green">{{ discovered_structure.tables|length }} Tables Found</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 1.5rem;">
+    {% for tbl in discovered_structure.tables %}
+    <div class="table-item" style="{% if current_conn.active_table == tbl.name %}border-left: 4px solid var(--accent-burnt-orange); background: #FFF;{% endif %}">
+      <div>
+        <span style="font-size: 0.8rem; color: var(--text-muted); margin-right: 0.5rem;">{{ tbl.schema }}</span>
+        <span class="table-name">{{ tbl.name }}</span>
+        <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.75rem;">(~{{ tbl.estimated_rows }} rows)</span>
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        {% if current_conn.active_table == tbl.name %}
+        <span class="badge badge-green">Active Target</span>
+        {% else %}
+        <form method="POST" action="{% url 'connections:index' %}" style="display: inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="select_table">
+          <input type="hidden" name="schema_name" value="{{ tbl.schema }}">
+          <input type="hidden" name="table_name" value="{{ tbl.name }}">
+          <button type="submit" class="btn-secondary" style="padding: 0.35rem 0.85rem; font-size: 0.82rem;">Select for Search</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <p style="color: var(--text-muted); padding: 1rem 0;">No base tables found in this database.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Column Metadata of Active Table -->
+  {% if active_columns %}
+  <div style="border-top: 1px solid var(--border-subtle); padding-top: 1.25rem;">
+    <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.75rem;">
+      Columns in Active Target: <code style="color: var(--accent-burnt-orange);">{{ current_conn.active_schema }}.{{ current_conn.active_table }}</code>
+    </h4>
+    <div>
+      {% for col in active_columns %}
+      <span class="col-pill">
+        <strong>{{ col.name }}</strong>: <span style="color: var(--text-muted);">{{ col.data_type }}</span>
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
