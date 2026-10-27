@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Executive Overview — JevQL{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+  <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem; letter-spacing: -0.02em;">
+    Executive Database Overview
+  </h1>
+  <p style="color: var(--text-secondary); font-size: 0.95rem;">
+    High-level metrics, database connectivity status, and query engine performance.
+  </p>
+</div>
+
+<!-- 4 Top KPI Cards -->
+<div class="metrics-grid">
+  <div class="metric-card">
+    <div class="metric-icon-circle orange">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    </div>
+    <div class="metric-data">
+      <div class="metric-val">{{ total_records }}</div>
+      <div class="metric-label">Dataset Records</div>
+      <div class="metric-sub">Employee Feedback table</div>
+    </div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-icon-circle purple">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/><path d="M3 12c0 1.66 4 3 9 3s9-1.34 9-3"/></svg>
+    </div>
+    <div class="metric-data">
+      <div class="metric-val" style="font-size: 1.15rem; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+        {% if active_conn %}{{ active_conn.database }}{% else %}jevql_db{% endif %}
+      </div>
+      <div class="metric-label">Active Database</div>
+      <div class="metric-sub">PostgreSQL 18.6</div>
+    </div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-icon-circle blue">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>
+    </div>
+    <div class="metric-data">
+      <div class="metric-val">{{ saved_count }}</div>
+      <div class="metric-label">Saved Queries</div>
+      <div class="metric-sub">In query library</div>
+    </div>
+  </div>
+
+  <div class="metric-card">
+    <div class="metric-icon-circle green">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    </div>
+    <div class="metric-data">
+      <div class="metric-val" style="font-size: 1.15rem;">
+        {% if provider_available %}Gemini Active{% else %}pg_trgm Ready{% endif %}
+      </div>
+      <div class="metric-label">Semantic Engine</div>
+      <div class="metric-sub">{{ provider_name }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Overview Grid -->
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+  <!-- Recent Query Activity -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.1rem; font-weight: 800; color: var(--text-main);">Recent Query Executions</h3>
+      <a href="{% url 'history' %}" style="color: var(--primary-orange); font-size: 0.85rem; font-weight: 600; text-decoration: none;">View All History →</a>
+    </div>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Query</th>
+          <th>Matches</th>
+          <th>Latency</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in recent_history %}
+        <tr>
+          <td style="font-weight: 600; color: var(--text-main); max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            <a href="{% url 'home' %}?q={{ item.query_text|urlencode }}" style="color: inherit; text-decoration: none;">
+              {{ item.query_text }}
+            </a>
+          </td>
+          <td><span class="badge" style="background: var(--bg-subtle);">{{ item.result_count }}</span></td>
+          <td style="color: #2E7D32; font-weight: 600;">{{ item.duration_ms }} ms</td>
+          <td style="color: var(--text-muted); font-size: 0.82rem;">{{ item.timestamp|date:"M d, H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            No recent executions logged. Run a query in the <a href="{% url 'home' %}" style="color: var(--primary-orange);">Search Dashboard</a>.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Quick Action & Health -->
+  <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+    <!-- System Health -->
+    <div class="card">
+      <h3 style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 1rem;">System Health & Guardrails</h3>
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.88rem;">
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-secondary);">PostgreSQL Connection</span>
+          <span class="badge badge-positive">Connected</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-secondary);">Read-Only Transactions</span>
+          <span class="badge badge-positive">Enforced</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-secondary);">Identifier Allowlist (quote_ident)</span>
+          <span class="badge badge-positive">Active</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-secondary);">Session Secret Encryption</span>
+          <span class="badge badge-positive">Signed</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Navigation Shortcuts -->
+    <div class="card" style="background: var(--bg-subtle);">
+      <h3 style="font-size: 1rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.75rem;">Quick Actions</h3>
+      <div style="display: flex; flex-direction: column; gap: 0.65rem;">
+        <a href="{% url 'home' %}" class="btn-primary" style="justify-content: center;">
+          Launch Search Dashboard
+        </a>
+        <a href="{% url 'connections:index' %}" class="btn-white" style="justify-content: center;">
+          Manage External PostgreSQL DBs
+        </a>
+        <a href="{% url 'analytics:overview' %}" class="btn-white" style="justify-content: center;">
+          View Deep-Dive Analytics
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
