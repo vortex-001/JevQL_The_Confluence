@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Query History — JevQL{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+  <div>
+    <h1 style="font-size: 1.75rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.5rem; letter-spacing: -0.02em;">
+      Query Execution History
+    </h1>
+    <p style="color: var(--text-secondary); font-size: 0.95rem;">
+      Audit log of executed queries, measured latency, record counts, and target database engine.
+    </p>
+  </div>
+  {% if history_records %}
+  <form method="POST" action="{% url 'history' %}" onsubmit="return confirm('Clear entire query history log?');">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="clear">
+    <button type="submit" class="btn-white" style="color: #D32F2F;">
+      Clear History Log
+    </button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="card" style="padding: 0; overflow: hidden;">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>QUERY</th>
+        <th style="width: 140px;">DATA SOURCE</th>
+        <th style="width: 180px;">ENGINE MODE</th>
+        <th style="width: 110px;">MATCHES</th>
+        <th style="width: 120px;">LATENCY</th>
+        <th style="width: 160px;">EXECUTED AT</th>
+        <th style="width: 110px; text-align: right;">ACTION</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in history_records %}
+      <tr>
+        <td>
+          <div style="font-weight: 600; color: var(--text-main);">
+            "{{ item.query_text }}"
+          </div>
+        </td>
+        <td>
+          <span class="mono-pill">{{ item.source }}</span>
+        </td>
+        <td>
+          <span style="font-size: 0.82rem; color: var(--text-secondary);">{{ item.search_mode }}</span>
+        </td>
+        <td>
+          <span class="badge" style="background: var(--bg-subtle);">{{ item.result_count }}</span>
+        </td>
+        <td style="color: #2E7D32; font-weight: 700; font-size: 0.9rem;">
+          {{ item.duration_ms }} ms
+        </td>
+        <td style="color: var(--text-muted); font-size: 0.82rem;">
+          {{ item.created_at|default:item.timestamp|date:"M d, Y H:i:s" }}
+        </td>
+        <td style="text-align: right;">
+          <a href="{% url 'home' %}?q={{ item.query_text|urlencode }}" class="btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+            Re-run →
+          </a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 4rem 2rem;">
+          <div style="font-size: 2rem; margin-bottom: 0.75rem;">⏱️</div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">No Query History Recorded</h3>
+          <p style="color: var(--text-secondary); max-width: 450px; margin: 0 auto 1.5rem auto;">
+            Queries executed through the Search Dashboard will automatically appear here with exact latency metrics.
+          </p>
+          <a href="{% url 'home' %}" class="btn-primary">Execute a Query</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
