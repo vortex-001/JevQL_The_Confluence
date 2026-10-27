@@ -1,0 +1,9 @@
+# Core Framework
+Django>=5.0.0,<5.2.0
+djangorestframework>=3.14.0,<3.16.0
+
+# Database Driver (PostgreSQL)
+psycopg2-binary>=2.9.9
+
+# Environment Configuration
+python-dotenv>=1.0.1
