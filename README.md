@@ -305,6 +305,8 @@ No accuracy, speed, or business-impact claims should be made until these metrics
 
 ---
 
+
+
 <p align="center">
   <strong>JevQL — Search Your Data by Meaning, Not Just Keywords.</strong>
   <br />
